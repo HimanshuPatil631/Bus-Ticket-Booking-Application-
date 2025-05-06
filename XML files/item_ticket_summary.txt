@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="12dp"
+    android:background="@android:color/white"
+    android:paddingTop="10dp">
+    <TextView
+        android:id="@+id/tvBusName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Bus Name"
+        android:textSize="18sp"
+        android:textStyle="bold"/>
+
+    <TextView
+        android:id="@+id/tvBusNumber"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Bus Number"
+        android:textSize="16sp"/>
+
+    <TextView
+        android:id="@+id/tvBookingTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Booking Time"
+        android:textSize="14sp"/>
+
+    <TextView
+        android:id="@+id/tvTotalFare"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Total Fare"
+        android:textSize="14sp"/>
+
+    <TextView
+        android:id="@+id/tvTotalPassengers"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Total Passengers"
+        android:textSize="14sp"/>
+
+
+</LinearLayout>

@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingTop="10dp">
+
+    <!-- Header Section -->
+    <LinearLayout
+        android:id="@+id/headerSection"
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@android:color/holo_red_dark"
+        android:padding="8dp">
+
+        <!-- App Logo -->
+        <ImageView
+            android:id="@+id/appLogo"
+            android:layout_width="65dp"
+            android:layout_height="65dp"
+            android:src="@mipmap/ic_launcher"
+            android:contentDescription="App Logo"
+            android:layout_marginEnd="8dp" />
+
+        <!-- App Name -->
+        <TextView
+            android:id="@+id/appName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="City Bus"
+            android:textSize="45dp"
+            android:textStyle="bold"
+            android:textColor="@android:color/white" />
+    </LinearLayout>
+
+    <!-- Main Content -->
+
+    <LinearLayout
+        android:layout_below="@+id/headerSection"
+        android:id="@+id/confirmdetails"
+        android:layout_width="match_parent"
+        android:layout_height="500dp"
+        android:orientation="vertical">
+
+        <!-- User ID -->
+        <TextView
+            android:id="@+id/txtUserId"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="User ID:"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <!-- Bus Details -->
+        <TextView
+            android:id="@+id/txtBusDetails"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="Bus Details:"
+            android:textSize="20sp" />
+
+        <!-- Selected Seats -->
+        <TextView
+            android:id="@+id/txtSelectedSeats"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="Selected Seats:"
+            android:textSize="20sp" />
+
+        <TextView
+            android:id="@+id/txtPassengerInfo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="Passenger Info:"
+            android:textSize="20sp" />
+
+        <!-- Total Fare -->
+        <TextView
+            android:id="@+id/txtTotalFare"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="Total Fare: ₹0"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- Bottom Buttons -->
+    <LinearLayout
+        android:id="@+id/buttonLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:gravity="center"
+        android:padding="10dp"
+        android:orientation="horizontal"
+        android:background="@android:color/white">
+
+        <!-- Back Button -->
+        <Button
+            android:id="@+id/bbtn"
+            android:layout_width="150dp"
+            android:layout_height="70dp"
+            android:layout_marginEnd="8dp"
+            android:text="Back"
+            android:textSize="20sp" />
+
+        <!-- Book -->
+        <Button
+            android:id="@+id/btnConfirmBooking"
+            android:layout_width="150dp"
+            android:layout_height="70dp"
+            android:text="Book"
+            android:textSize="20sp" />
+    </LinearLayout>
+
+</RelativeLayout>

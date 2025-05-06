@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/white"
+    android:paddingTop="10dp"> <!-- Added top padding for status bar -->
+    <!-- Header Section with Red Background -->
+    <LinearLayout
+        android:id="@+id/headerSection"
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@android:color/holo_red_dark"
+        android:padding="8dp">
+
+        <!-- App Logo on Top Left -->
+        <ImageView
+            android:id="@+id/appLogo"
+            android:layout_width="65dp"
+            android:layout_height="65dp"
+            android:src="@mipmap/ic_launcher"
+            android:contentDescription="App Logo"
+            android:layout_marginEnd="8dp" />
+
+        <!-- App Name on Top Right -->
+        <TextView
+            android:id="@+id/appName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="City Bus"
+            android:textSize="45dp"
+            android:textStyle="bold"
+
+            android:textColor="@android:color/white" />
+    </LinearLayout>
+
+
+    <LinearLayout
+        android:layout_below="@id/headerSection"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:orientation="vertical"
+        android:layout_alignParentBottom="true"
+        android:layout_weight="1"
+        android:padding="16dp">
+
+        <TextView
+            android:layout_width="358dp"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            android:text="Login"
+            android:textAlignment="center"
+            android:textSize="67sp"
+            android:textStyle="bold" />
+        <EditText
+            android:id="@+id/logUser"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:hint="Enter Name"
+            android:inputType="text"
+            android:layout_marginBottom="30dp" />
+
+        <EditText
+            android:id="@+id/logPass"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:hint="Enter Password"
+            android:inputType="textPassword"
+            android:layout_marginBottom="30dp" />
+
+        <!-- First Button -->
+        <Button
+            android:id="@+id/btnl"
+            android:layout_width="356dp"
+            android:layout_height="78dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="16dp"
+            android:text="Login"
+            android:textSize="25dp" />
+
+        <!-- Second Button -->
+        <Button
+            android:id="@+id/btnr"
+            android:layout_width="356dp"
+            android:layout_height="78dp"
+            android:text="Create new account"
+            android:textSize="25dp" />
+
+
+        <TextView
+            android:id="@+id/tvError"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#FF0000"
+            android:visibility="gone"
+            android:layout_marginTop="16dp" />
+        <TextView
+            android:id="@+id/adminloginfromlogin"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="30dp"
+            android:clickable="true"
+            android:text="Admin Login"
+            android:textSize="30dp"
+            android:textStyle="bold"
+            android:layout_gravity="center">
+        </TextView>
+    </LinearLayout>
+</RelativeLayout>

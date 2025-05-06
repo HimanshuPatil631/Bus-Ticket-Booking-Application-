@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/white"
+    android:paddingTop="10dp">
+    <LinearLayout
+        android:id="@+id/headerSection"
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@android:color/holo_red_dark"
+        android:padding="8dp">
+
+        <!-- App Logo -->
+        <ImageView
+            android:id="@+id/appLogo"
+            android:layout_width="65dp"
+            android:layout_height="65dp"
+            android:src="@mipmap/ic_launcher"
+            android:contentDescription="App Logo"
+            android:layout_marginEnd="8dp" />
+
+        <!-- App Name -->
+        <TextView
+            android:id="@+id/appName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="City Bus"
+            android:textSize="36sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/white" />
+    </LinearLayout>
+    <LinearLayout
+        android:layout_below="@id/headerSection"
+        android:layout_above="@+id/buttonLayout"
+        android:layout_width="match_parent"
+        android:layout_height="300dp"
+        android:orientation="vertical"
+        android:padding="16dp">
+        <TextView
+            android:id="@+id/tvWelcome"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Welcome!"
+            android:textSize="40dp"
+            android:textStyle="bold"
+            android:textAlignment="center"
+
+            />
+
+        <TextView
+            android:id="@+id/tvName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:hint="Name:"
+            android:textSize="40dp" />
+
+        <TextView
+            android:id="@+id/tvUserId"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="UserId"
+            android:textSize="40dp"
+            android:layout_marginBottom="20dp"/>
+    </LinearLayout>
+    <LinearLayout
+        android:id="@+id/buttonLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:gravity="center"
+        android:padding="10dp"
+        android:orientation="horizontal"
+        android:background="@android:color/white">
+
+        <!-- Back Button -->
+        <Button
+            android:id="@+id/userbbtn"
+            android:layout_width="150dp"
+            android:layout_height="70dp"
+            android:layout_marginEnd="8dp"
+            android:text="Back"
+            android:textSize="20sp" />
+
+        <!-- Book -->
+        <Button
+            android:id="@+id/tvLogout"
+            android:layout_width="150dp"
+            android:layout_height="70dp"
+            android:textSize="20sp"
+            android:text="Log Out" />
+    </LinearLayout>
+</RelativeLayout>

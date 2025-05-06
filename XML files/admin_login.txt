@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/white"
+    android:paddingTop="10dp"> <!-- Added top padding for status bar -->
+    <!-- Header Section with Red Background -->
+    <LinearLayout
+        android:id="@+id/headerSection"
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@android:color/holo_red_dark"
+        android:padding="8dp">
+
+        <!-- App Logo on Top Left -->
+        <ImageView
+            android:id="@+id/appLogo"
+            android:layout_width="65dp"
+            android:layout_height="65dp"
+            android:src="@mipmap/ic_launcher"
+            android:contentDescription="App Logo"
+            android:layout_marginEnd="8dp" />
+
+        <!-- App Name on Top Right -->
+        <TextView
+            android:id="@+id/appName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="City Bus"
+            android:textSize="45dp"
+            android:textStyle="bold"
+
+            android:textColor="@android:color/white" />
+    </LinearLayout>
+
+
+    <LinearLayout
+        android:layout_below="@id/headerSection"
+        android:layout_width="match_parent"
+        android:layout_height="180dp"
+        android:layout_above="@+id/buttonofdown"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:layout_width="358dp"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            android:text="Admin Login"
+            android:textAlignment="center"
+            android:textSize="40sp"
+            android:textStyle="bold" />
+        <EditText
+            android:id="@+id/usernameInput"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:hint="Enter Username"
+            android:inputType="text"
+            android:layout_marginBottom="30dp" />
+
+        <EditText
+            android:id="@+id/passwordInput"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:hint="Enter Password"
+            android:inputType="textPassword"
+            android:layout_marginBottom="30dp" />
+
+        <EditText
+            android:id="@+id/secretKeyInput"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:hint="Enter Secret Key"
+            android:inputType="textPassword"
+            android:layout_marginBottom="30dp" />
+    </LinearLayout>
+
+        <!-- First Button -->
+        <LinearLayout
+            android:id="@+id/buttonofdown"
+            android:layout_width="match_parent"
+            android:layout_height="90dp"
+            android:layout_alignParentBottom="true"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <!-- Back Button -->
+            <Button
+                android:id="@+id/adminback"
+                android:layout_width="150dp"
+                android:layout_height="70dp"
+                android:layout_marginEnd="8dp"
+                android:text="Back"
+                android:textSize="20sp" />
+
+            <!-- Book -->
+            <Button
+                android:id="@+id/adminLoginBtn"
+                android:layout_width="150dp"
+                android:layout_height="70dp"
+                android:text="Login"
+                android:textSize="20sp" />
+        </LinearLayout>
+</RelativeLayout>
