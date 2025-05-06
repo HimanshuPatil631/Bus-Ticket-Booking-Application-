@@ -1,0 +1,13 @@
+{
+  "rules": {
+    ".read": "now < 1742754600000",  
+    ".write": "now < 1742754600000",
+
+    "Bookings": {
+      "$bookingId": {
+        ".read": "data.child('userId').val() === auth.uid",  
+        ".write": "data.child('userId').val() === auth.uid"
+      }
+    }
+  }
+}
