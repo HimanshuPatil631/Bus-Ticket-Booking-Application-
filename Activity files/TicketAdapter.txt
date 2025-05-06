@@ -1,0 +1,55 @@
+package com.example.myapplication;
+
+import android.content.Context;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
+import java.util.List;
+
+public class TicketAdapter extends RecyclerView.Adapter<TicketAdapter.TicketViewHolder> {
+    private Context context;
+    private List<com.example.myapplication.Ticket> ticketList;
+
+    public TicketAdapter(Context context, List<com.example.myapplication.Ticket> ticketList) {
+        this.context = context;
+        this.ticketList = ticketList;
+    }
+
+    @NonNull
+    @Override
+    public TicketViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(context).inflate(R.layout.item_ticket, parent, false);
+        return new TicketViewHolder(view);
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull TicketViewHolder holder, int position) {
+        com.example.myapplication.Ticket ticket = ticketList.get(position);
+        holder.tvBusName.setText("Bus Name : "+ticket.getBusName());
+        holder.tvBusNumber.setText("Bus Number : "+ticket.getBusNumber());
+        holder.tvBookingTime.setText("Booked On : " + ticket.getBookingTime());
+        holder.tvTotalFare.setText("Fare: ₹" + ticket.getTotalFare());
+        holder.tvTotalPassengers.setText("Passengers: " + ticket.getTotalPassengers());
+    }
+
+    @Override
+    public int getItemCount() {
+        return ticketList.size();
+    }
+
+    static class TicketViewHolder extends RecyclerView.ViewHolder {
+        TextView tvBusName, tvBusNumber, tvBookingTime, tvTotalFare, tvTotalPassengers;
+
+        public TicketViewHolder(@NonNull View itemView) {
+            super(itemView);
+            tvBusName = itemView.findViewById(R.id.tvBusName);
+            tvBusNumber = itemView.findViewById(R.id.tvBusNumber);
+            tvBookingTime = itemView.findViewById(R.id.tvBookingTime);
+            tvTotalFare = itemView.findViewById(R.id.tvTotalFare);
+            tvTotalPassengers = itemView.findViewById(R.id.tvTotalPassengers);
+        }
+    }
+}

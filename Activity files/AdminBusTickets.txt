@@ -1,0 +1,91 @@
+package com.example.myapplication;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.ListView;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import java.util.ArrayList;
+import java.util.List;
+
+public class AdminBusTickets extends AppCompatActivity {
+    private ListView listViewBusesforadmin;
+    private FirebaseFirestore db;
+    private List<String> busNames;
+    private Button backToMainPanel, selectBusForTicket;
+    private String selectedBusName = null;  // Store selected bus name
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_admin_bus_ticket);
+
+        // Initialize UI components
+        backToMainPanel = findViewById(R.id.backtoadminpanel);
+        selectBusForTicket = findViewById(R.id.selectbusforticket);
+        listViewBusesforadmin = findViewById(R.id.listViewBuses);
+        db = FirebaseFirestore.getInstance();
+
+        busNames = new ArrayList<>();
+
+        // Load bus list from Firestore
+        loadBusList();
+
+        // Navigate back to Admin Panel
+        backToMainPanel.setOnClickListener(v -> {
+            Intent intent = new Intent(AdminBusTickets.this, AdminPanelActivity.class);
+            startActivity(intent);
+            finish();
+        });
+
+        // Handle bus selection
+        listViewBusesforadmin.setOnItemClickListener((parent, view, position, id) -> {
+            selectedBusName = busNames.get(position); // Store selected bus name
+            Toast.makeText(this, "Selected Bus: " + selectedBusName, Toast.LENGTH_SHORT).show();
+        });
+
+        // Pass selected bus name and navigate to booking summary
+        selectBusForTicket.setOnClickListener(v -> {
+            if (selectedBusName != null) {
+                Intent intent = new Intent(AdminBusTickets.this, AdminTicketSummaryActivity.class);
+                intent.putExtra("BUS_NAME", selectedBusName); // Pass the bus name
+                startActivity(intent);
+            } else {
+                Toast.makeText(AdminBusTickets.this, "Please select a bus first", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void loadBusList() {
+        CollectionReference busesRef = db.collection("Buses");
+
+        busesRef.get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                busNames.clear();
+
+                for (QueryDocumentSnapshot document : task.getResult()) {
+                    String busName = document.getString("Name"); // Get the 'Name' field
+                    if (busName != null && !busName.isEmpty()) {
+                        busNames.add(busName);
+                    }
+                }
+
+                // Populate ListView with bus names
+                ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, busNames);
+                listViewBusesforadmin.setAdapter(adapter);
+            } else {
+                Toast.makeText(this, "Error loading buses", Toast.LENGTH_SHORT).show();
+                Log.e("FirestoreError", "Error fetching bus list", task.getException());
+            }
+        });
+    }
+}

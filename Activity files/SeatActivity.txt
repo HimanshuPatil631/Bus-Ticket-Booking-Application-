@@ -1,0 +1,157 @@
+package com.example.myapplication;
+
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class SeatActivity extends AppCompatActivity {
+    private List<Button> seatButtons = new ArrayList<>();
+    private List<Integer> selectedSeats = new ArrayList<>();
+    private int totalPassengers = 0;
+    private TextView txtTotal;
+    private SharedPreferences sharedPreferences;
+    private DatabaseReference busSeatsRef;
+    private String selectedBusName;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_seat);
+
+        txtTotal = findViewById(R.id.txtTotal);
+        sharedPreferences = getSharedPreferences("BusAppPrefs", MODE_PRIVATE);
+        totalPassengers = sharedPreferences.getInt("TOTAL_PASSENGERS", 0);
+
+        txtTotal.setText("Total Count: " + totalPassengers);
+
+        // Get the selected bus name from intent
+        selectedBusName = getIntent().getStringExtra("busName");
+        if (selectedBusName == null || selectedBusName.isEmpty()) {
+            Toast.makeText(this, "Error: No bus selected!", Toast.LENGTH_LONG).show();
+            finish();
+            return;
+        }
+
+        // Firebase Reference for this bus
+        busSeatsRef = FirebaseDatabase.getInstance().getReference("busSeats").child(selectedBusName);
+
+        initializeSeatButtons();
+        loadBookedSeats();
+
+        for (Button button : seatButtons) {
+            button.setOnClickListener(this::onSeatClick);
+        }
+
+        findViewById(R.id.sbtn1).setOnClickListener(v -> finish());
+        findViewById(R.id.sbtn2).setOnClickListener(v -> proceedToConfirmBooking());
+    }
+
+    private void initializeSeatButtons() {
+        int[] buttonIds = {
+                R.id.Seat1, R.id.Seat2, R.id.Seat3, R.id.Seat4, R.id.Seat5, R.id.Seat6, R.id.Seat7, R.id.Seat8, R.id.Seat9, R.id.Seat10,
+                R.id.Seat11, R.id.Seat12, R.id.Seat13, R.id.Seat14, R.id.Seat15, R.id.Seat16, R.id.Seat17, R.id.Seat18, R.id.Seat19, R.id.Seat20,
+                R.id.Seat21, R.id.Seat22, R.id.Seat23, R.id.Seat24, R.id.Seat25, R.id.Seat26, R.id.Seat27, R.id.Seat28
+        };
+
+        for (int id : buttonIds) {
+            Button button = findViewById(id);
+            button.setBackgroundColor(getResources().getColor(R.color.gray)); // Default color
+            button.setEnabled(true);
+            seatButtons.add(button);
+        }
+    }
+
+    private void loadBookedSeats() {
+        busSeatsRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                long currentTime = System.currentTimeMillis();
+
+                for (DataSnapshot seatSnapshot : snapshot.getChildren()) {
+                    int seatIndex = Integer.parseInt(seatSnapshot.getKey());
+                    long bookingTime = seatSnapshot.getValue(Long.class);
+
+                    Button seatButton = seatButtons.get(seatIndex - 1);
+
+                    if (bookingTime + (5 * 60 * 1000) > currentTime) { // 5 min expiry
+                        seatButton.setBackgroundColor(getResources().getColor(R.color.red));
+                        seatButton.setEnabled(false);
+                        seatButton.setTag("booked");
+                    } else {
+                        busSeatsRef.child(String.valueOf(seatIndex)).removeValue(); // Remove expired bookings
+                        seatButton.setBackgroundColor(getResources().getColor(R.color.gray)); // Reset color
+                        seatButton.setEnabled(true);
+                        seatButton.setTag(null);
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(SeatActivity.this, "Failed to load booked seats", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void onSeatClick(View view) {
+        Button clickedSeat = (Button) view;
+        int seatIndex = seatButtons.indexOf(clickedSeat) + 1;
+
+        if (clickedSeat.getTag() != null && clickedSeat.getTag().equals("booked")) {
+            return;
+        }
+
+        if (selectedSeats.contains(seatIndex)) {
+            selectedSeats.remove(Integer.valueOf(seatIndex));
+            clickedSeat.setBackgroundColor(getResources().getColor(R.color.gray));
+        } else if (selectedSeats.size() < totalPassengers) {
+            selectedSeats.add(seatIndex);
+            clickedSeat.setBackgroundColor(getResources().getColor(R.color.green));
+        } else {
+            Toast.makeText(this, "You can only select " + totalPassengers + " seats.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void proceedToConfirmBooking() {
+        if (totalPassengers == 0) {
+            Toast.makeText(this, "Error: Passenger count not set!", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        if (selectedSeats.size() != totalPassengers) {
+            Toast.makeText(this, "Please select exactly " + totalPassengers + " seats!", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        long bookingTime = System.currentTimeMillis();
+        Map<String, Object> bookingData = new HashMap<>();
+        for (int seat : selectedSeats) {
+            bookingData.put(String.valueOf(seat), bookingTime);
+        }
+        busSeatsRef.updateChildren(bookingData);
+
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString("selectedSeats", selectedSeats.toString());
+        editor.apply();
+
+        Intent intent = new Intent(SeatActivity.this,ConfirmBookingActivity.class);
+        intent.putExtra("busName", selectedBusName);
+        intent.putIntegerArrayListExtra("selectedSeats", new ArrayList<>(selectedSeats));
+        startActivity(intent);
+    }
+}

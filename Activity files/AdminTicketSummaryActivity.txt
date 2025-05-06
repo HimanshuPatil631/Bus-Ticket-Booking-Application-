@@ -1,0 +1,124 @@
+package com.example.myapplication;
+
+import android.annotation.SuppressLint;
+import android.content.Intent;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class AdminTicketSummaryActivity extends AppCompatActivity {
+    private ListView listViewBookings;
+    private TextView totalTicketsView, totalProfitView;
+    private DatabaseReference databaseReference;
+    private List<String> bookingList;
+    private String selectedBusName;
+    private int totalTickets = 0;
+    private int totalProfit = 0;
+    private Button back;
+
+    @SuppressLint("MissingInflatedId")
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_admin_ticket_summary);
+
+        // Initialize UI components
+        listViewBookings = findViewById(R.id.listViewBookings);
+        totalTicketsView = findViewById(R.id.totalTickets);
+        totalProfitView = findViewById(R.id.totalProfit);
+        back=findViewById(R.id.backtoadminbusticket);
+
+        back.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent=new Intent(AdminTicketSummaryActivity.this, AdminBusTickets.class);
+                startActivity(intent);
+            }
+        });
+
+        databaseReference = FirebaseDatabase.getInstance().getReference("Bookings");
+        bookingList = new ArrayList<>();
+
+        // Get the selected bus name from intent
+        selectedBusName = getIntent().getStringExtra("BUS_NAME");
+
+        if (selectedBusName != null) {
+            fetchBookings(selectedBusName);
+        } else {
+            Toast.makeText(this, "No bus selected", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void fetchBookings(String busName) {
+        databaseReference.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                bookingList.clear();
+                totalTickets = 0;
+                totalProfit = 0;
+                boolean found = false;
+
+                for (DataSnapshot userSnapshot : snapshot.getChildren()) {
+                    for (DataSnapshot bookingSnapshot : userSnapshot.getChildren()) {
+                        String dbBusName = bookingSnapshot.child("busName").getValue(String.class);
+
+                        if (dbBusName != null && dbBusName.equals(busName)) {
+                            found = true;
+                            totalTickets++;
+
+                            int fare = bookingSnapshot.child("totalFare").getValue(Integer.class) != null
+                                    ? bookingSnapshot.child("totalFare").getValue(Integer.class) : 0;
+                            totalProfit += fare;
+
+                            String bookingDetails = "User Id: " + bookingSnapshot.child("userId").getValue(String.class) +
+                                    "\nBus Details: " + bookingSnapshot.child("busNumber").getValue(String.class) +
+                                    "\nBooking Time: " + bookingSnapshot.child("bookingTime").getValue(String.class) +
+                                    "\nTotal Passengers: " + bookingSnapshot.child("totalPassengers").getValue(Long.class) +
+                                    "\nMen Count: " + bookingSnapshot.child("menCount").getValue(Long.class) +
+                                    "\nChild Count: " + bookingSnapshot.child("childCount").getValue(Long.class) +
+                                    "\nWomen Count: "+bookingSnapshot.child("womenCount").getValue(Long.class)+
+                                    "\nTotal Fare: $" + fare +
+                                    "\n";
+                            bookingList.add(bookingDetails);
+                        }
+                    }
+                }
+
+                if (!found) {
+                    bookingList.add("No bookings found for this bus.");
+                }
+
+                // Update total tickets & total profit
+                totalTicketsView.setText("Total Tickets Sold: " + totalTickets);
+                totalProfitView.setText("Total Profit: $" + totalProfit);
+
+                // Populate ListView
+                ArrayAdapter<String> adapter = new ArrayAdapter<>(AdminTicketSummaryActivity.this, android.R.layout.simple_list_item_1, bookingList);
+                listViewBookings.setAdapter(adapter);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(AdminTicketSummaryActivity.this, "Failed to load bookings", Toast.LENGTH_SHORT).show();
+                Log.e("DatabaseError", "Error fetching bookings", error.toException());
+            }
+        });
+    }
+}

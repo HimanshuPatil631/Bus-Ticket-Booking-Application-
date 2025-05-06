@@ -1,0 +1,86 @@
+package com.example.myapplication;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.ListView;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class BusListActivity extends AppCompatActivity {
+
+    private ListView busListView;
+    private Button backButton, selectButton;
+    private List<String> busList;
+    private String selectedBus = null; // Store selected bus details
+    private ArrayAdapter<String> adapter;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_bus_list);
+
+        busListView = findViewById(R.id.listViewBuses);
+        backButton = findViewById(R.id.backtosearch);
+        selectButton = findViewById(R.id.selectbus);
+
+        // Retrieve bus list from intent
+        busList = getIntent().getStringArrayListExtra("busList");
+        if (busList == null) {
+            busList = new ArrayList<>();
+        }
+
+        adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, busList);
+        busListView.setAdapter(adapter);
+
+        // Handle bus selection
+        busListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                selectedBus = busList.get(position);
+                Toast.makeText(BusListActivity.this, "Bus Selected: " + selectedBus, Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        // Handle "Select" button click
+        selectButton.setOnClickListener(v -> {
+            if (selectedBus != null) {
+                // Assuming bus details are in format: "BusName - BusNumber - OtherDetails"
+                String[] busDetailsArray = selectedBus.split(" - ");
+                if (busDetailsArray.length >= 2) {
+                    String busName = busDetailsArray[0].trim();
+                    String busNumber = busDetailsArray[1].trim();
+                    String busDetails = selectedBus; // Full details
+
+                    Intent intent = new Intent(BusListActivity.this, PassengerActivity.class);
+                    intent.putExtra("busName", busName);
+                    intent.putExtra("busNumber", busNumber);
+                    intent.putExtra("busDetails", busDetails);
+                    startActivity(intent);
+                } else {
+                    Toast.makeText(BusListActivity.this, "Invalid bus format!", Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                Toast.makeText(BusListActivity.this, "Please select a bus first!", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        // Handle "Back" button click
+        backButton.setOnClickListener(v -> finish()); // Finishes this activity and returns to the previous one
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (adapter != null) {
+            adapter.notifyDataSetChanged();
+        }
+    }
+}

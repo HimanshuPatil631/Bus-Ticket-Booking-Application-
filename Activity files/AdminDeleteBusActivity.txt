@@ -1,0 +1,102 @@
+package com.example.myapplication;
+
+import android.annotation.SuppressLint;
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.ListView;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+
+import java.util.ArrayList;
+
+public class AdminDeleteBusActivity extends AppCompatActivity {
+
+    private FirebaseFirestore db;
+    private ListView busListView;
+    private Button deleteButton,btnBack;
+    private ArrayList<String> busList;
+    private ArrayAdapter<String> adapter;
+    private String selectedBusId = null;  // Stores selected bus document ID
+
+    @SuppressLint("MissingInflatedId")
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_admin_delete_bus);
+
+        db = FirebaseFirestore.getInstance();
+        busListView = findViewById(R.id.busListView);
+        deleteButton = findViewById(R.id.deleteButton);
+        busList = new ArrayList<>();
+        adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_single_choice, busList);
+        busListView.setAdapter(adapter);
+        busListView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
+        btnBack=findViewById(R.id.backtopanel);
+
+        loadBusList();
+
+        // Select bus from the list
+        busListView.setOnItemClickListener((parent, view, position, id) -> {
+            selectedBusId = busList.get(position);  // Store selected bus ID
+        });
+
+        btnBack.setOnClickListener(v -> {
+            Intent intent = new Intent(AdminDeleteBusActivity.this, AdminPanelActivity.class);
+            startActivity(intent);
+            finish();
+        });
+
+        // Delete button functionality
+        deleteButton.setOnClickListener(view -> {
+            if (selectedBusId != null) {
+                deleteBus(selectedBusId);
+            } else {
+                Toast.makeText(AdminDeleteBusActivity.this, "Please select a bus to delete", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void loadBusList() {
+        db.collection("Buses").get().addOnCompleteListener(task -> {
+            if (task.isSuccessful() && task.getResult() != null) {
+                busList.clear();
+                for (QueryDocumentSnapshot document : task.getResult()) {
+                    String busName = document.getString("Name"); // Adjust based on Firestore structure
+                    if (busName != null) {
+                        busList.add(busName);
+                    }
+                }
+                adapter.notifyDataSetChanged();
+            } else {
+                Toast.makeText(AdminDeleteBusActivity.this, "Failed to load buses!", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void deleteBus(String busName) {
+        db.collection("Buses")
+                .whereEqualTo("Name", busName)  // Adjust based on Firestore structure
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
+                        db.collection("Buses").document(document.getId()).delete()
+                                .addOnSuccessListener(aVoid -> {
+                                    Toast.makeText(AdminDeleteBusActivity.this, "Bus deleted successfully", Toast.LENGTH_SHORT).show();
+                                    busList.remove(busName);
+                                    adapter.notifyDataSetChanged();
+                                    selectedBusId = null;  // Reset selection
+                                })
+                                .addOnFailureListener(e -> Toast.makeText(AdminDeleteBusActivity.this, "Deletion failed", Toast.LENGTH_SHORT).show());
+                    }
+                });
+    }
+}

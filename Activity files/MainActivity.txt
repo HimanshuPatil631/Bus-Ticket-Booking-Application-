@@ -1,0 +1,63 @@
+package com.example.myapplication;
+
+import android.annotation.SuppressLint;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.Bundle;
+import android.widget.Button;
+import androidx.appcompat.app.AppCompatActivity;
+
+public class MainActivity extends AppCompatActivity {
+
+    private Button btnProfile, btnShowTicket, btnBookTicket, Logoutuser;
+    private SharedPreferences sharedPreferences;
+    private SharedPreferences.Editor editor;
+
+    @SuppressLint("MissingInflatedId")
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        // Initialize SharedPreferences
+        sharedPreferences = getSharedPreferences("UserSession", MODE_PRIVATE);
+        editor = sharedPreferences.edit();
+
+        // Initialize buttons
+        btnProfile = findViewById(R.id.btnProfile);
+        btnShowTicket = findViewById(R.id.btnMyTickets);
+        btnBookTicket = findViewById(R.id.btnBookTicket);
+        Logoutuser = findViewById(R.id.logoutuser);
+
+        // Profile Button
+        btnProfile.setOnClickListener(view -> {
+            Intent intent = new Intent(MainActivity.this, ProfileActivity.class);
+            startActivity(intent);
+        });
+
+        // Logout Button (Fixed)
+        Logoutuser.setOnClickListener(view -> {
+            // Clear user session
+            editor.clear();
+            editor.apply();
+
+            // Redirect to LoginActivity & prevent going back
+            Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK); // Clear activity stack
+            startActivity(intent);
+            finish(); // Close MainActivity
+        });
+
+        // My Tickets Button
+        btnShowTicket.setOnClickListener(view -> {
+            Intent intent = new Intent(MainActivity.this, MyTicketsActivity.class);
+            startActivity(intent);
+        });
+
+        // Book Ticket Button
+        btnBookTicket.setOnClickListener(view -> {
+            Intent intent = new Intent(MainActivity.this, BusSearchActivity.class);
+            startActivity(intent);
+        });
+    }
+}

@@ -1,0 +1,28 @@
+package com.example.myapplication;
+
+public class Ticket {
+    private String bookingTime, busName, busNumber;
+    private int totalFare, totalPassengers;
+    private String userId;
+
+    public Ticket() {
+        // Default constructor for Firebase
+    }
+
+    public Ticket(String bookingTime, String busName, String busNumber, int totalFare, int totalPassengers, String userId) {
+        this.bookingTime = bookingTime;
+        this.busName = busName;
+        this.busNumber = busNumber;
+        this.totalFare = totalFare;
+        this.totalPassengers = totalPassengers;
+        this.userId = userId;
+    }
+
+    public String getBookingTime() { return bookingTime; }
+    public String getBusName() { return busName; }
+    public String getBusNumber() { return busNumber; }
+    public int getTotalFare() { return totalFare; }
+    public int getTotalPassengers() { return totalPassengers; }
+    public String getUserId() { return userId; }
+}
+

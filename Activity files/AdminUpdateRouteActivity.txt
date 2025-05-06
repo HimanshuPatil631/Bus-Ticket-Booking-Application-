@@ -1,0 +1,204 @@
+package com.example.myapplication;
+
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.Bundle;
+import android.text.TextUtils;
+import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
+
+public class AdminUpdateRouteActivity extends AppCompatActivity {
+
+    private EditText etBusName, etBusNumber, etFrom, etTo, etFromTime, etToTime, etStops, etArrivalTimes;
+    private Button btnBack, btnUpdate;
+    private String busId;
+    private FirebaseFirestore db;
+    private SharedPreferences sharedPreferences;
+    private final SimpleDateFormat timeFormat = new SimpleDateFormat("hh:mm a", Locale.US);
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_admin_update_route);
+
+        db = FirebaseFirestore.getInstance();
+        sharedPreferences = getSharedPreferences("AdminPrefs", Context.MODE_PRIVATE);
+
+        etBusName = findViewById(R.id.etBusName);
+        etBusNumber = findViewById(R.id.etBusNumber);
+        etFrom = findViewById(R.id.etFrom);
+        etTo = findViewById(R.id.etTo);
+        etFromTime = findViewById(R.id.etFromTime);
+        etToTime = findViewById(R.id.etToTime);
+        etStops = findViewById(R.id.etStops);
+        etArrivalTimes = findViewById(R.id.etArrivalTimes);
+        btnUpdate = findViewById(R.id.btnUpdate);
+        btnBack = findViewById(R.id.listback);
+
+        busId = getIntent().getStringExtra("BUS_ID");
+        if (busId == null || busId.trim().isEmpty()) {
+            Toast.makeText(this, "Error: No Bus ID received!", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+
+        loadBusDetails();
+
+        btnBack.setOnClickListener(v -> {
+            Intent intent = new Intent(AdminUpdateRouteActivity.this, AdminBusListActivity.class);
+            startActivity(intent);
+            finish();
+        });
+
+        btnUpdate.setOnClickListener(v -> {
+            if (isAdminLoggedIn()) {
+                updateBusDetails();
+            } else {
+                Toast.makeText(this, "Access Denied: Admin not logged in!", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private boolean isAdminLoggedIn() {
+        return sharedPreferences.getBoolean("isLoggedIn", false);
+    }
+
+    private void loadBusDetails() {
+        db.collection("Buses").document(busId).get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        etBusName.setText(documentSnapshot.getString("Name"));
+                        etBusNumber.setText(documentSnapshot.getString("Bus Number"));
+                        String fromLocation = documentSnapshot.getString("From");
+                        String toLocation = documentSnapshot.getString("To");
+                        etFrom.setText(fromLocation);
+                        etTo.setText(toLocation);
+
+                        List<String> stops = (List<String>) documentSnapshot.get("Stops");
+                        Map<String, String> arrivalTimes = (Map<String, String>) documentSnapshot.get("Arrival Time");
+
+                        if (stops != null) etStops.setText(TextUtils.join(", ", stops));
+                        if (arrivalTimes != null) {
+                            etFromTime.setText(arrivalTimes.getOrDefault(fromLocation, ""));
+                            etToTime.setText(arrivalTimes.getOrDefault(toLocation, ""));
+
+                            StringBuilder arrivalText = new StringBuilder();
+                            for (String stop : stops) {
+                                arrivalText.append(stop).append(": ").append(arrivalTimes.getOrDefault(stop, "No Data")).append("\n");
+                            }
+                            etArrivalTimes.setText(arrivalText.toString());
+                        }
+                    } else {
+                        Toast.makeText(this, "Bus details not found", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .addOnFailureListener(e -> Log.e("FirestoreError", "Error fetching data", e));
+    }
+
+    private void updateBusDetails() {
+        String busName = etBusName.getText().toString().trim();
+        String busNumber = etBusNumber.getText().toString().trim();
+        String from = etFrom.getText().toString().trim();
+        String to = etTo.getText().toString().trim();
+        String fromTime = etFromTime.getText().toString().trim();
+        String toTime = etToTime.getText().toString().trim();
+        String stopsStr = etStops.getText().toString().trim();
+        String arrivalTimesStr = etArrivalTimes.getText().toString().trim();
+
+        if (busName.isEmpty() || busNumber.isEmpty() || from.isEmpty() || to.isEmpty() ||
+                fromTime.isEmpty() || toTime.isEmpty() || stopsStr.isEmpty() || arrivalTimesStr.isEmpty()) {
+            Toast.makeText(this, "All fields are required", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        List<String> stops = Arrays.asList(stopsStr.split("\\s*,\\s*"));
+        Map<String, String> arrivalTimes = new LinkedHashMap<>();
+        for (String line : arrivalTimesStr.split("[\n,]")) {
+            String[] keyValue = line.split(":", 2);
+            if (keyValue.length == 2) {
+                arrivalTimes.put(keyValue[0].trim(), keyValue[1].trim());
+            }
+        }
+
+        try {
+            Date fromDate = timeFormat.parse(fromTime);
+            Date toDate = timeFormat.parse(toTime);
+            if (fromDate == null || toDate == null || fromDate.after(toDate)) {
+                Toast.makeText(this, "From Time must be earlier than To Time!", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            Set<String> timeSet = new HashSet<>();
+            Date prevTime = fromDate;
+
+            for (String stop : stops) {
+                if (!arrivalTimes.containsKey(stop)) {
+                    Toast.makeText(this, "Missing time for stop: " + stop, Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                Date stopTime = timeFormat.parse(arrivalTimes.get(stop));
+                if (stopTime == null) {
+                    Toast.makeText(this, "Invalid time format for stop: " + stop, Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                if (!timeSet.add(arrivalTimes.get(stop))) {
+                    Toast.makeText(this, "Duplicate time detected for different stops!", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                if (stopTime.before(prevTime)) {
+                    Toast.makeText(this, "Stop time is out of order! Ensure times are increasing.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                prevTime = stopTime;
+            }
+
+            if (!arrivalTimes.containsKey(to)) {
+                Toast.makeText(this, "Missing time for destination stop!", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            Date finalTime = timeFormat.parse(arrivalTimes.get(to));
+            if (finalTime == null || finalTime.before(prevTime)) {
+                Toast.makeText(this, "Final stop time is incorrect!", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+        } catch (ParseException e) {
+            Toast.makeText(this, "Invalid time format!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        db.collection("Buses").document(busId)
+                .set(new HashMap<String, Object>() {{
+                    put("Name", busName);
+                    put("Bus Number", busNumber);
+                    put("From", from);
+                    put("To", to);
+                    put("From Time", fromTime);
+                    put("To Time", toTime);
+                    put("Stops", stops);
+                    put("Arrival Time", arrivalTimes);
+                }}, SetOptions.merge())
+                .addOnSuccessListener(aVoid -> Toast.makeText(this, "Bus updated successfully", Toast.LENGTH_SHORT).show())
+                .addOnFailureListener(e -> Log.e("FirestoreError", "Update failed", e));
+    }
+
+}

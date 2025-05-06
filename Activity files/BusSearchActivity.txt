@@ -1,0 +1,172 @@
+package com.example.myapplication;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.Spinner;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+public class BusSearchActivity extends AppCompatActivity {
+    private Spinner fromSpinner, toSpinner;
+    private Button searchButton,backButton;
+    private List<String> placesList = new ArrayList<>();
+    private FirebaseFirestore db;
+    private List<String> filteredToPlaces = new ArrayList<>();
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_bussearch);
+
+        fromSpinner = findViewById(R.id.fromspinner);
+        toSpinner = findViewById(R.id.tospinner);
+        searchButton = findViewById(R.id.button);
+
+        db = FirebaseFirestore.getInstance();
+
+        addPlaces();
+        setupFromSpinner();
+
+        searchButton.setOnClickListener(v -> searchBuses());
+
+        backButton = findViewById(R.id.backtomain);
+        backButton.setOnClickListener(v -> {
+            Intent intent = new Intent(BusSearchActivity.this, MainActivity.class);
+            startActivity(intent);
+            finish(); // Close current activity
+        });
+
+    }
+
+    private void addPlaces() {
+        placesList.clear();
+        placesList.add("Select");
+        placesList.add("Purna");
+        placesList.add("Kopar");
+        placesList.add("Kalher");
+        placesList.add("Kasheli");
+        placesList.add("Balkum");
+        placesList.add("Thane");
+    }
+
+    private void setupFromSpinner() {
+        ArrayAdapter<String> fromAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, placesList);
+        fromAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        fromSpinner.setAdapter(fromAdapter);
+        fromSpinner.setSelection(0);
+
+        fromSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                String selectedFrom = fromSpinner.getSelectedItem().toString();
+                if (!selectedFrom.equals("Select")) {
+                    fetchAvailableToPlaces(selectedFrom);
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+    }
+
+    private void fetchAvailableToPlaces(String selectedFrom) {
+        filteredToPlaces.clear();
+        filteredToPlaces.add("Select");
+
+        db.collection("Buses").get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                for (QueryDocumentSnapshot doc : task.getResult()) {
+                    List<?> stopsRaw = (List<?>) doc.get("Stops");
+                    List<String> stops = new ArrayList<>();
+                    if (stopsRaw != null) {
+                        for (Object obj : stopsRaw) {
+                            stops.add(obj.toString());
+                        }
+                    }
+
+                    if (stops.contains(selectedFrom)) {
+                        int fromIndex = stops.indexOf(selectedFrom);
+                        for (int i = fromIndex + 1; i < stops.size(); i++) {
+                            String stop = stops.get(i);
+                            if (!filteredToPlaces.contains(stop)) {
+                                filteredToPlaces.add(stop);
+                            }
+                        }
+                    }
+                }
+                setupToSpinner();
+            }
+        });
+    }
+
+    private void setupToSpinner() {
+        ArrayAdapter<String> toAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, filteredToPlaces);
+        toAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        toSpinner.setAdapter(toAdapter);
+        toSpinner.setSelection(0);
+    }
+
+    private void searchBuses() {
+        String from = fromSpinner.getSelectedItem().toString();
+        String to = toSpinner.getSelectedItem().toString();
+
+        if (from.equals("Select") || to.equals("Select")) {
+            Toast.makeText(this, "Please select both From and To locations", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        db.collection("Buses").get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                List<String> busList = new ArrayList<>();
+                for (QueryDocumentSnapshot doc : task.getResult()) {
+                    List<?> stopsRaw = (List<?>) doc.get("Stops");
+                    List<String> stops = new ArrayList<>();
+                    if (stopsRaw != null) {
+                        for (Object obj : stopsRaw) {
+                            stops.add(obj.toString());
+                        }
+                    }
+
+                    Map<String, String> arrivalTimes = (Map<String, String>) doc.get("Arrival Time");
+
+                    String busName = doc.getString("Name");
+                    String busNumber = doc.getString("Bus Number");
+
+                    if (stops.contains(from) && stops.contains(to)) {
+                        int fromIndex = stops.indexOf(from);
+                        int toIndex = stops.indexOf(to);
+
+                        // ✅ Ensures that 'From' comes BEFORE 'To'
+                        if (fromIndex < toIndex) {
+                            String arrivalTimeFrom = arrivalTimes != null ? arrivalTimes.getOrDefault(from, "N/A") : "N/A";
+                            String arrivalTimeTo = arrivalTimes != null ? arrivalTimes.getOrDefault(to, "N/A") : "N/A";
+
+                            busList.add(busName + " - " + busNumber +
+                                    "\nFrom: " + from + " at " + arrivalTimeFrom +
+                                    "\nTo: " + to + " at " + arrivalTimeTo);
+                        }
+                    }
+                }
+                if (busList.isEmpty()) {
+                    Toast.makeText(BusSearchActivity.this, "No buses available for this route", Toast.LENGTH_SHORT).show();
+                } else {
+                    Intent intent = new Intent(BusSearchActivity.this, BusListActivity.class);
+                    intent.putStringArrayListExtra("busList", (ArrayList<String>) busList);
+                    startActivity(intent);
+                }
+            }
+        });
+    }
+}

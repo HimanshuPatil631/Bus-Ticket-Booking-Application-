@@ -1,0 +1,182 @@
+package com.example.myapplication;
+
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.Bundle;
+import android.text.TextUtils;
+import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Toast;
+import androidx.appcompat.app.AppCompatActivity;
+import com.google.firebase.firestore.FirebaseFirestore;
+import java.util.*;
+import java.text.SimpleDateFormat;
+import java.text.ParseException;
+
+public class AdminAddBusActivity extends AppCompatActivity {
+
+    private EditText fromInput, toInput, fromTimeInput, toTimeInput, stopsInput, arrivalTimesInput, busNameInput, busNumberInput;
+    private Button addBusButton,backtopanel1;
+    private FirebaseFirestore db;
+    private SharedPreferences sharedPreferences;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_add_bus);
+
+        db = FirebaseFirestore.getInstance();
+        sharedPreferences = getSharedPreferences("AdminPrefs", Context.MODE_PRIVATE);
+
+        fromInput = findViewById(R.id.editFrom);
+        toInput = findViewById(R.id.editTo);
+        fromTimeInput = findViewById(R.id.editFromTime);
+        toTimeInput = findViewById(R.id.editToTime);
+        stopsInput = findViewById(R.id.editStops);
+        arrivalTimesInput = findViewById(R.id.editArrivalTimes);
+        busNameInput = findViewById(R.id.editBusName);
+        busNumberInput = findViewById(R.id.editBusNumber);
+        addBusButton = findViewById(R.id.buttonAddBus);
+        backtopanel1=findViewById(R.id.addbusback);
+
+        backtopanel1.setOnClickListener(v -> {
+            Intent intent = new Intent(AdminAddBusActivity.this, AdminPanelActivity.class);
+            startActivity(intent);
+            finish();
+        });
+
+        addBusButton.setOnClickListener(v -> {
+            if (isAdminLoggedIn()) {
+                addNewBus();
+            } else {
+                Toast.makeText(this, "Access Denied: Admin not logged in!", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private boolean isAdminLoggedIn() {
+        return sharedPreferences.getBoolean("isLoggedIn", false);
+    }
+
+    private void addNewBus() {
+        String from = fromInput.getText().toString().trim();
+        String to = toInput.getText().toString().trim();
+        String fromTime = fromTimeInput.getText().toString().trim();
+        String toTime = toTimeInput.getText().toString().trim();
+        String stopsText = stopsInput.getText().toString().trim();
+        String arrivalTimesText = arrivalTimesInput.getText().toString().trim();
+        String busName = busNameInput.getText().toString().trim();
+        String busNumber = busNumberInput.getText().toString().trim();
+
+        List<String> stops = Arrays.asList(stopsText.split(","));
+        List<String> arrivalTimes = Arrays.asList(arrivalTimesText.split(","));
+
+        if (!validateBusData(from, fromTime, to, toTime, busNumber, busName, stops, arrivalTimes)) {
+            return;
+        }
+
+        Map<String, String> arrivalTimeMap = new LinkedHashMap<>();
+        for (int i = 0; i < stops.size(); i++) {
+            arrivalTimeMap.put(stops.get(i).trim(), arrivalTimes.get(i).trim());
+        }
+
+        Map<String, Object> busData = new HashMap<>();
+        busData.put("From", from);
+        busData.put("To", to);
+        busData.put("From Time", fromTime);
+        busData.put("To Time", toTime);
+        busData.put("Stops", stops);
+        busData.put("Arrival Time", arrivalTimeMap);
+        busData.put("Name", busName);
+        busData.put("Bus Number", busNumber);
+        busData.put("adminAuth", "SECRET123");
+
+        db.collection("Buses").add(busData)
+                .addOnSuccessListener(documentReference ->
+                        Toast.makeText(this, "Bus added successfully!", Toast.LENGTH_SHORT).show()
+                )
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Failed to add bus!", Toast.LENGTH_SHORT).show();
+                    Log.e("FirestoreError", "Error adding bus", e);
+                });
+    }
+
+
+    private boolean validateBusData(String from, String fromTime, String to, String toTime, String busName, String busNumber,
+                                    List<String> stops, List<String> arrivalTimes) {
+        if (TextUtils.isEmpty(from) || TextUtils.isEmpty(to) || TextUtils.isEmpty(fromTime) || TextUtils.isEmpty(busName) ||
+                TextUtils.isEmpty(busNumber) || TextUtils.isEmpty(toTime) || stops.isEmpty() || arrivalTimes.isEmpty()) {
+            Toast.makeText(this, "All fields are required!", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        if (stops.size() != arrivalTimes.size()) {
+            Toast.makeText(this, "Stops and Arrival Times count must match!", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        if (!stops.get(0).trim().equalsIgnoreCase(from.trim()) ||
+                !stops.get(stops.size() - 1).trim().equalsIgnoreCase(to.trim())) {
+            Toast.makeText(this, "First stop must match From & last stop must match To!", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        if (!arrivalTimes.get(0).trim().equalsIgnoreCase(fromTime.trim()) ||
+                !arrivalTimes.get(arrivalTimes.size() - 1).trim().equalsIgnoreCase(toTime.trim())) {
+            Toast.makeText(this, "First time must match From Time & last time must match To Time!", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        // Validate Time Format and Order
+        SimpleDateFormat sdf = new SimpleDateFormat("hh:mm a", Locale.getDefault());
+        Set<String> uniqueTimes = new HashSet<>(); // Track unique times
+        try {
+            Date fromDateTime = sdf.parse(fromTime);
+            Date toDateTime = sdf.parse(toTime);
+
+            if (fromDateTime == null || toDateTime == null) {
+                Toast.makeText(this, "Invalid time format!", Toast.LENGTH_SHORT).show();
+                return false;
+            }
+
+            if (toDateTime.before(fromDateTime)) {
+                Toast.makeText(this, "To Time cannot be earlier than From Time!", Toast.LENGTH_SHORT).show();
+                return false;
+            }
+
+            // Validate each stop time in sequence
+            Date previousTime = fromDateTime;
+            for (int i = 0; i < arrivalTimes.size(); i++) {
+                Date currentTime = sdf.parse(arrivalTimes.get(i).trim());
+
+                if (currentTime == null) {
+                    Toast.makeText(this, "Invalid arrival time format!", Toast.LENGTH_SHORT).show();
+                    return false;
+                }
+
+                // Ensure each stop has a later time than the previous stop
+                if (currentTime.before(previousTime)) {
+                    Toast.makeText(this, "Arrival times must be in ascending order!", Toast.LENGTH_SHORT).show();
+                    return false;
+                }
+
+                // Ensure no duplicate times exist across different stops
+                if (uniqueTimes.contains(arrivalTimes.get(i).trim())) {
+                    Toast.makeText(this, "Different stops cannot have the same arrival time!", Toast.LENGTH_SHORT).show();
+                    return false;
+                }
+
+                uniqueTimes.add(arrivalTimes.get(i).trim());
+                previousTime = currentTime;
+            }
+        } catch (ParseException e) {
+            Toast.makeText(this, "Error parsing times! Use hh:mm AM/PM format.", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        return true;
+    }
+}
