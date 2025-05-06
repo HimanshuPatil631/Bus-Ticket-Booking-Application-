@@ -1,0 +1,25 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Match for Buses collection
+    match /Buses/{busId} {
+
+      // Allow everyone to read bus details
+      allow read: if true;
+      allow delete: if true;
+
+      // Allow create and update only if adminAuth is "SECRET123"
+      allow create, update: if request.resource.data.adminAuth == "SECRET123";
+
+      // Allow delete only if the user is an authenticated admin
+      allow delete: if request.auth != null && isAdmin(request.auth.uid);
+    }
+  }
+
+  // Helper function to check if the user is an admin
+  function isAdmin(uid) {
+    // Check if the user's UID exists in the Admin collection
+    return exists(/databases/$(database)/documents/Admin/$(uid));
+  }
+}
